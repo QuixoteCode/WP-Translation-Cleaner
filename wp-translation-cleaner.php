@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP Translation Cleaner
  * Description: Analiza y pone en cuarentena archivos de traduccion de WordPress que no quieras conservar. Se accede desde Herramientas > Limpiador de traducciones en el panel de administracion de WordPress. Tal y como esta el plugin tiene varios riesgos de seguridad y de integridad de archivos que conviene corregir antes de utilizarlo en produccion
- * Version: 0.0.1
+ * Version: 0.0.2
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Lucas
@@ -105,18 +105,22 @@ final class WP_Translation_Cleaner {
 
     /**
      * Extrae el codigo regional del idioma a partir del nombre del archivo
-     * Admite formatos como es_ES y es-ES
      * Devuelve una cadena vacia cuando no reconoce un codigo
      */
     private static function get_language_code($filename) {
-        // Detecta codigos habituales como fr_FR, es_ES, pt_BR y zh_CN
+        // Detecta codigos regionales como es_ES, fr_FR y pt_BR.
         if (preg_match('/(?:^|[-_.])([a-z]{2,3}_[A-Z]{2})(?=[-_.]|$)/', $filename, $m)) {
             return $m[1];
         }
 
-        // Normaliza variantes con guion al formato con guion bajo
+        // Detecta codigos regionales con guion, como es-ES.
         if (preg_match('/(?:^|[-_.])([a-z]{2,3}-[A-Z]{2})(?=[-_.]|$)/', $filename, $m)) {
             return str_replace('-', '_', $m[1]);
+        }
+
+        // Detecta archivos JSON con un codigo de idioma seguido de un hash, p. ej. vi-abc123.json.
+        if (preg_match('/^([a-z]{2,3})-[a-f0-9]{32}\.json$/i', $filename, $m)) {
+            return strtolower($m[1]);
         }
 
         return '';
